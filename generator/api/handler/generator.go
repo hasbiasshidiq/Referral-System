@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -101,7 +102,58 @@ func LoginGenerator(service generator.UseCase) http.Handler {
 			AccessToken: AccessToken,
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(toJ)
+	})
+}
+
+// ExtendGenerator rest api handler
+func ExtendGenerator(service generator.UseCase) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errorMessage := "Error extending time"
+
+		reqToken := r.Header.Get("Authorization")
+		splitToken := strings.Split(reqToken, "Bearer ")
+
+		if len(splitToken) < 2 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(errorMessage))
+			return
+		}
+
+		AccessToken := splitToken[1]
+
+		// AccessToken := r.Header.Get("Authorization")[7:]
+		ExpirationTime, err := service.ExtendTime(AccessToken)
+
+		if val, ok := entity.ErrCodeMapper[err]; ok {
+			toJ := &presenter.AdditionalStatus{
+				StatusCode:    val,
+				StatusMessage: err.Error(),
+			}
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(toJ)
+			return
+		}
+		if err == entity.ErrUnauthorizedAccess {
+			log.Println(err.Error())
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(entity.ErrUnauthorizedAccess.Error()))
+			return
+		}
+
+		if err != nil {
+			log.Println(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(errorMessage))
+			return
+		}
+
+		toJ := &presenter.Contributor{
+			Status: "Success Extending Link till " + ExpirationTime,
+		}
+
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(toJ)
 	})
 }
@@ -116,5 +168,9 @@ func MakeGeneratorHandlers(r *mux.Router, n negroni.Negroni, service generator.U
 	r.Handle("/generator/login", n.With(
 		negroni.Wrap(LoginGenerator(service)),
 	)).Methods("POST", "OPTIONS").Name("loginGenerator")
+
+	r.Handle("/generator/extend-time", n.With(
+		negroni.Wrap(ExtendGenerator(service)),
+	)).Methods("PUT", "OPTIONS").Name("extendGenerator")
 
 }

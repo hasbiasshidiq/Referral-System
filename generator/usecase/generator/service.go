@@ -83,3 +83,31 @@ func (s *Service) LoginGenerator(ID, Password string) (AccessToken string, err e
 	return accessTok, err
 
 }
+
+// ExtendTime extend time of specific link
+func (s *Service) ExtendTime(AccessToken string) (ExpirationTime string, err error) {
+
+	// first check if token is valid
+	role, referralLink, err := s.grpc.Introspect(AccessToken)
+	if err != nil {
+		log.Println("error ExtendTime usecase - IntrospectToken err : ", err)
+		return
+	}
+
+	if role != "generator" {
+		err = entity.ErrUnauthorizedAccess
+		return
+	}
+
+	Exp := time.Now().AddDate(0, 0, 7)
+	err = s.repo.UpdateExpirationTime(referralLink, Exp)
+	if err != nil {
+		log.Println("error ExtendTime usecase - UpdateExpirationTime err : ", err)
+		return
+	}
+
+	ExpirationTime = Exp.Format("2006-01-02 15:04:05")
+
+	return
+
+}

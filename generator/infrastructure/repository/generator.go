@@ -117,3 +117,33 @@ func (r *GeneratorSQL) FetchReferralLink(GeneratorID string) (ReferralLink strin
 
 	return ReferralLink, err
 }
+
+// UpdateExpirationTime by Referral Link
+func (r *GeneratorSQL) UpdateExpirationTime(ReferralLink string, ExpirationTime time.Time) (err error) {
+	stmt, err := r.db.Prepare(`
+	UPDATE generator
+		SET expirate_at = $2, updated_at = $3
+	WHERE 
+		generated_link = $1;`)
+
+	if err != nil {
+		return
+	}
+
+	res, err := stmt.Exec(ReferralLink, ExpirationTime, time.Now())
+
+	count, _ := res.RowsAffected()
+
+	if count == 0 {
+		err = entity.ErrNotFound
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.Close()
+
+	return err
+}
