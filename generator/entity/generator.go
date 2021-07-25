@@ -23,7 +23,7 @@ type Generator struct {
 
 // NewGenerator is a function to create new generator data
 func NewGenerator(ID, Name, Email, Password string) (*Generator, error) {
-	app := &Generator{
+	gen := &Generator{
 		ID:       ID,
 		Name:     Name,
 		Email:    Email,
@@ -34,11 +34,11 @@ func NewGenerator(ID, Name, Email, Password string) (*Generator, error) {
 		UpdatedAt:     time.Now(),
 		ExpirateAt:    time.Now().AddDate(0, 0, 7),
 	}
-	err := app.Validate()
+	err := gen.Validate()
 	if err != nil {
 		return nil, err
 	}
-	return app, nil
+	return gen, nil
 }
 
 //Validate validate Generator element
