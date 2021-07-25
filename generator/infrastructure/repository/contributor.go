@@ -27,7 +27,7 @@ func NewContributorSQL(db *sql.DB) *ContributorSQL {
 func (r *ContributorSQL) Contribute(e *entity.Contributor) (err error) {
 	err = r.Update(e)
 
-	if err == sql.ErrNoRows {
+	if err == entity.ErrNotFound {
 		err = r.Create(e)
 	}
 
@@ -83,7 +83,7 @@ func (r *ContributorSQL) Update(e *entity.Contributor) (err error) {
 	count, _ := res.RowsAffected()
 
 	if count == 0 {
-		err = sql.ErrNoRows
+		err = entity.ErrNotFound
 		return
 	}
 

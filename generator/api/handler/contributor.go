@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -17,7 +18,18 @@ func CreateContribution(service contributor.UseCase) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errorMessage := "Error make contribution"
 
-		AccessToken := r.Header.Get("Authorization")[7:]
+		reqToken := r.Header.Get("Authorization")
+		splitToken := strings.Split(reqToken, "Bearer ")
+
+		if len(splitToken) < 2 {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(errorMessage))
+			return
+		}
+
+		AccessToken := splitToken[1]
+
+		// AccessToken := r.Header.Get("Authorization")[7:]
 
 		var input struct {
 			Email string `json:"email"`
@@ -25,8 +37,7 @@ func CreateContribution(service contributor.UseCase) http.Handler {
 
 		err := json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
-			log.Println("CreateContribution error handle input : ", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(errorMessage))
 			return
 		}
@@ -60,7 +71,7 @@ func CreateContribution(service contributor.UseCase) http.Handler {
 			Status: "Contribution is counted",
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(toJ)
 	})
 }
