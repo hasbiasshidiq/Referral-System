@@ -34,9 +34,9 @@ func CreateGenerator(service generator.UseCase) http.Handler {
 
 		generatedLink, err := service.CreateGenerator(input.ID, input.Name, input.Email, input.Password)
 
-		if err == entity.ErrAlreadyExist {
+		if val, ok := entity.ErrCodeMapper[err]; ok {
 			toJ := &presenter.AdditionalStatus{
-				StatusCode:    entity.ErrCodeMapper[err],
+				StatusCode:    val,
 				StatusMessage: err.Error(),
 			}
 			w.WriteHeader(http.StatusOK)
