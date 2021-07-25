@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 
@@ -53,4 +54,28 @@ func (r *GeneratorSQL) Create(e *entity.Generator) error {
 	}
 
 	return stmt.Close()
+}
+
+//Create an application
+func (r *GeneratorSQL) FetchExpirationTime(ReferralLink string) (Exp time.Time, err error) {
+	stmt, err := r.db.Prepare("SELECT expirate_at FROM generator WHERE generated_link = $1")
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.QueryRow(ReferralLink).Scan(&Exp)
+
+	if err == sql.ErrNoRows {
+		err = entity.ErrNotFound
+		return
+	}
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.Close()
+
+	return Exp, err
 }
