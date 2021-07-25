@@ -7,6 +7,7 @@ import (
 	grpcdriver "Referral-System/generator/infrastructure/grpc-driver"
 	"Referral-System/generator/infrastructure/repository"
 
+	"Referral-System/generator/usecase/contributor"
 	"Referral-System/generator/usecase/generator"
 	"Referral-System/generator/usecase/token"
 
@@ -50,14 +51,17 @@ func main() {
 	)
 
 	generatorRepo := repository.NewGeneratorSQL(db)
+	contributorRepo := repository.NewContributorSQL(db)
 	tokenGRPC := grpcdriver.NewTokenGRPC()
 
 	generatorService := generator.NewService(generatorRepo)
 	tokenService := token.NewService(generatorRepo, tokenGRPC)
+	contributorService := contributor.NewService(contributorRepo, tokenGRPC)
 
 	//Generator
 	handler.MakeGeneratorHandlers(r, *n, generatorService)
 	handler.MakeReferralHandlers(r, *n, tokenService)
+	handler.MakeContributorHandlers(r, *n, contributorService)
 
 	http.Handle("/", r)
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
