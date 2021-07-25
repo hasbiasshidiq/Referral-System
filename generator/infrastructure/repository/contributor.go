@@ -95,3 +95,42 @@ func (r *ContributorSQL) Update(e *entity.Contributor) (err error) {
 
 	return err
 }
+
+func (r *ContributorSQL) List(ReferralLink string) (Contributors []*entity.Contributor, err error) {
+	stmt, err := r.db.Prepare(`
+	SELECT 
+		email, contribution
+	FROM 
+		contributor
+	WHERE 
+		generated_link = $1
+	order by created_at desc`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var contributors []*entity.Contributor
+
+	rows, err := stmt.Query(ReferralLink)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var c entity.Contributor
+		err = rows.Scan(
+			&c.Email,
+			&c.Contribution)
+
+		if err != nil {
+			return nil, err
+		}
+
+		c.ReferralLink = ReferralLink
+
+		contributors = append(contributors, &c)
+	}
+	return contributors, nil
+}

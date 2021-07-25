@@ -149,7 +149,7 @@ func ExtendGenerator(service generator.UseCase) http.Handler {
 			return
 		}
 
-		toJ := &presenter.Contributor{
+		toJ := &presenter.ExtendingTime{
 			Status: "Success Extending Link till " + ExpirationTime,
 		}
 

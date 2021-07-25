@@ -5,6 +5,7 @@ import entity "Referral-System/generator/entity"
 //Repository interface
 type Repository interface {
 	Contribute(e *entity.Contributor) (err error)
+	List(referralLink string) (contributors []*entity.Contributor, err error)
 }
 
 //GRPCDriver interface
@@ -15,4 +16,5 @@ type GRPCDriver interface {
 //UseCase interface
 type UseCase interface {
 	Contribute(Email, AccessToken string) (err error)
+	ListContributor(AccessToken string) ([]*entity.Contributor, error)
 }

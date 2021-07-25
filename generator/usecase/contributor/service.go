@@ -42,3 +42,28 @@ func (s *Service) Contribute(Email, AccessToken string) (err error) {
 
 	return
 }
+
+//ListContributor get all contributor for specific generator / referrall link
+func (s *Service) ListContributor(AccessToken string) ([]*entity.Contributor, error) {
+
+	// first check if token is valid
+	role, referralLink, err := s.grpc.Introspect(AccessToken)
+	if err != nil {
+		log.Println("error ListContributor usecase - IntrospectToken err : ", err)
+		return nil, err
+	}
+
+	if role != "generator" {
+		err = entity.ErrUnauthorizedAccess
+		return nil, err
+	}
+
+	contributors, err := s.repo.List(referralLink)
+	if err != nil {
+		return nil, err
+	}
+	if len(contributors) == 0 {
+		return nil, entity.ErrNotFound
+	}
+	return contributors, nil
+}

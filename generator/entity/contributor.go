@@ -4,6 +4,7 @@ package entity
 type Contributor struct {
 	Email        string `json:"email"`
 	ReferralLink string `json:"referral_link"`
+	Contribution string `json:"contribution"`
 }
 
 // NewContributor is a function to create new contributor data

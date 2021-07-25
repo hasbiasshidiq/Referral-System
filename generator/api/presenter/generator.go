@@ -9,3 +9,8 @@ type Generator struct {
 type LoginGenerator struct {
 	AccessToken string `json:"access_token"`
 }
+
+// ExtendingTime presenter data
+type ExtendingTime struct {
+	Status string `json:"status"`
+}
