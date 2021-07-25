@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/hasbiasshidiq/auth-stub-3"
+	"github.com/hasbiasshidiq/auth-stub-5"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

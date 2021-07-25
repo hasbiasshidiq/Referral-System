@@ -1,11 +1,13 @@
 package token
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	auth_pb "github.com/hasbiasshidiq/auth-stub-3"
+	auth_pb "github.com/hasbiasshidiq/auth-stub-5"
 	"golang.org/x/net/context"
 )
 
@@ -60,6 +62,78 @@ func (s *Server) CreateToken(ctx context.Context, req *auth_pb.CreateTokenReques
 	return
 }
 
+// IntrospectToken introspect jwt token
+func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTokenRequest) (resp *auth_pb.IntrospectTokenResponse, err error) {
+
+	// read public key from .key.pub file
+	pubKey, err := ioutil.ReadFile("cert/jwtRS256.key.pub")
+	if err != nil {
+		log.Println("Introspect- Readfile err : ", err.Error())
+
+		resp = &auth_pb.IntrospectTokenResponse{
+			StatusCode: auth_pb.AuthStatusCode_INTERNAL_SERVER_ERROR,
+		}
+
+		return
+	}
+
+	// validate token based on public key and extract claims
+	claims, err := Validate(pubKey, req.AccessToken)
+	if err != nil {
+		log.Println("Introspect- Validate err : ", err.Error())
+
+		resp = &auth_pb.IntrospectTokenResponse{
+			StatusCode: auth_pb.AuthStatusCode_INVALID_TOKEN,
+		}
+
+		return
+	}
+
+	// check issuer
+	issuer := fmt.Sprintf("%v", claims["iss"])
+	if issuer != "Referral_System" {
+
+		log.Println("issuer is not match")
+
+		resp = &auth_pb.IntrospectTokenResponse{
+			StatusCode: auth_pb.AuthStatusCode_INVALID_TOKEN,
+		}
+		return
+	}
+
+	exp := fmt.Sprintf("%v", claims["iss"])
+
+	// parsing expiration time (string) into time format
+	val, err := time.Parse("2006-01-02 15:04:05", exp)
+	if err != nil {
+		log.Println("Introspect- Time Parse err : ", err.Error())
+
+		resp = &auth_pb.IntrospectTokenResponse{
+			StatusCode: auth_pb.AuthStatusCode_INTERNAL_SERVER_ERROR,
+		}
+		return
+	}
+
+	// if token has already expirated
+	if val.Before(time.Now()) {
+		log.Println("Expirate Token")
+
+		resp = &auth_pb.IntrospectTokenResponse{
+			StatusCode: auth_pb.AuthStatusCode_EXPIRATE_TOKEN,
+		}
+		return
+	}
+
+	// return successful response
+	resp = &auth_pb.IntrospectTokenResponse{
+		StatusCode:   auth_pb.AuthStatusCode_SUCCESS,
+		ReferralLink: fmt.Sprintf("%v", claims["referral_link"]),
+		Role:         fmt.Sprintf("%v", claims["role"]),
+	}
+
+	return
+}
+
 // MakeClaims will parsing request to claims
 func MakeClaims(req *auth_pb.CreateTokenRequest) jwt.MapClaims {
 	claims := make(jwt.MapClaims)
@@ -73,4 +147,28 @@ func MakeClaims(req *auth_pb.CreateTokenRequest) jwt.MapClaims {
 	claims["role"] = req.Role
 
 	return claims
+}
+
+func Validate(publicKey []byte, token string) (jwt.MapClaims, error) {
+	key, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("validate: parse key: %w", err)
+	}
+
+	tok, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
+		if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected method: %s", jwtToken.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("validate: %w", err)
+	}
+
+	claims, ok := tok.Claims.(jwt.MapClaims)
+	if !ok || !tok.Valid {
+		return nil, fmt.Errorf("validate: invalid")
+	}
+
+	return claims, nil
 }
