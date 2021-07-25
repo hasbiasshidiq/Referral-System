@@ -54,7 +54,7 @@ func main() {
 	contributorRepo := repository.NewContributorSQL(db)
 	tokenGRPC := grpcdriver.NewTokenGRPC()
 
-	generatorService := generator.NewService(generatorRepo)
+	generatorService := generator.NewService(generatorRepo, tokenGRPC)
 	tokenService := token.NewService(generatorRepo, tokenGRPC)
 	contributorService := contributor.NewService(contributorRepo, tokenGRPC)
 

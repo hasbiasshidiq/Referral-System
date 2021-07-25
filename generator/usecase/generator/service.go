@@ -2,7 +2,9 @@ package generator
 
 import (
 	entity "Referral-System/generator/entity"
+	"database/sql"
 	"log"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -10,12 +12,14 @@ import (
 // Service for Generator usecase
 type Service struct {
 	repo Repository
+	grpc GRPCDriver
 }
 
 // NewService create new service
-func NewService(r Repository) *Service {
+func NewService(r Repository, g GRPCDriver) *Service {
 	return &Service{
 		repo: r,
+		grpc: g,
 	}
 }
 
@@ -36,4 +40,46 @@ func (s *Service) CreateGenerator(ID, Name, Email, Password string) (GeneratedLi
 	err = s.repo.Create(a)
 
 	return a.GeneratedLink, err
+}
+
+// LoginGenerator create a Generator
+func (s *Service) LoginGenerator(ID, Password string) (AccessToken string, err error) {
+
+	p, err := s.repo.FetchPassword(ID)
+	if err == sql.ErrNoRows {
+		err = entity.ErrInvalidCredentials
+		return
+	}
+
+	if err != nil {
+		log.Println("LoginGenerator UseCase - FetchPassword err : ", err)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(p), []byte(Password))
+	if err != nil {
+		log.Println("LoginGenerator UseCase - CompareHash err : ", err)
+		err = entity.ErrInvalidCredentials
+		return
+	}
+
+	referralLink, err := s.repo.FetchReferralLink(ID)
+	if err != nil {
+		log.Println("LoginGenerator UseCase - Fetch Referral Link err : ", err)
+		return
+	}
+
+	// token will be expired in one day
+	tokenExpirationTime := time.Now().AddDate(0, 0, 1)
+
+	t, err := entity.NewToken(referralLink, "generator", tokenExpirationTime)
+	if err != nil {
+		log.Println("LoginGenerator UseCase - NewToken err : ", err)
+		return
+	}
+
+	accessTok, err := s.grpc.Create(t)
+
+	return accessTok, err
+
 }

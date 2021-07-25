@@ -23,6 +23,9 @@ var ErrInvalidExpirationTime = errors.New("invalid expiration time")
 //ErrUnauthorizedAccess invalid entity
 var ErrUnauthorizedAccess = errors.New("unauthorized access")
 
+//ErrInvalidCredentials invalid login credentials
+var ErrInvalidCredentials = errors.New("invalid credentials")
+
 var ErrCodeMapper = map[error]int{
 	ErrNotFound:              10,
 	ErrInvalidEntity:         20,
@@ -30,4 +33,5 @@ var ErrCodeMapper = map[error]int{
 	ErrInvalidToken:          51,
 	ErrExpirateToken:         52,
 	ErrInvalidExpirationTime: 55,
+	ErrInvalidCredentials:    56,
 }

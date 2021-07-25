@@ -79,3 +79,41 @@ func (r *GeneratorSQL) FetchExpirationTime(ReferralLink string) (Exp time.Time, 
 
 	return Exp, err
 }
+
+// FetchPassword will fetch a password by generator_id
+func (r *GeneratorSQL) FetchPassword(GeneratorID string) (Password string, err error) {
+	stmt, err := r.db.Prepare("SELECT password FROM generator WHERE id = $1")
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.QueryRow(GeneratorID).Scan(&Password)
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.Close()
+
+	return Password, err
+}
+
+// FetchReferralLink will fetch a referralLink by generator_id
+func (r *GeneratorSQL) FetchReferralLink(GeneratorID string) (ReferralLink string, err error) {
+	stmt, err := r.db.Prepare("SELECT generated_link FROM generator WHERE id = $1")
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.QueryRow(GeneratorID).Scan(&ReferralLink)
+
+	if err != nil {
+		return
+	}
+
+	err = stmt.Close()
+
+	return ReferralLink, err
+}
