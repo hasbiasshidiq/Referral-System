@@ -59,6 +59,8 @@ func (s *Server) CreateToken(ctx context.Context, req *auth_pb.CreateTokenReques
 		AccessToken: tok,
 	}
 
+	log.Println("Create JWT Token Success")
+
 	return
 }
 
@@ -74,9 +76,8 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 	}
 
 	// validate token based on public key and extract claims
-	claims, err := Validate(pubKey, req.AccessToken)
-	if err != nil {
-		log.Println("Introspect- Validate err : ", err.Error())
+	claims, validated := Validate(pubKey, req.AccessToken)
+	if !validated {
 
 		resp = &auth_pb.IntrospectTokenResponse{
 			StatusCode: auth_pb.AuthStatusCode_INVALID_TOKEN,
@@ -126,6 +127,8 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 		Role:         fmt.Sprintf("%v", claims["role"]),
 	}
 
+	log.Println("Introspection Success")
+
 	return
 }
 
@@ -144,10 +147,12 @@ func MakeClaims(req *auth_pb.CreateTokenRequest) jwt.MapClaims {
 	return claims
 }
 
-func Validate(publicKey []byte, token string) (jwt.MapClaims, error) {
+func Validate(publicKey []byte, token string) (claims jwt.MapClaims, validated bool) {
 	key, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf("validate: parse key: %w", err)
+		log.Printf("err validate: parse key: %w", err)
+
+		return nil, false
 	}
 
 	tok, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
@@ -157,13 +162,15 @@ func Validate(publicKey []byte, token string) (jwt.MapClaims, error) {
 		return key, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("validate: %w", err)
+		log.Printf("validate: %w", err)
+		return nil, false
 	}
 
 	claims, ok := tok.Claims.(jwt.MapClaims)
 	if !ok || !tok.Valid {
-		return nil, fmt.Errorf("validate: invalid")
+		log.Printf("validate: invalid")
+		return nil, false
 	}
 
-	return claims, nil
+	return claims, true
 }

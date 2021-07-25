@@ -5,32 +5,13 @@ import (
 	"log"
 	"net"
 
-	"github.com/hasbiasshidiq/auth-stub-5"
+	auth_pb "github.com/hasbiasshidiq/auth-stub-5"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 func main() {
-	// log.SetFormatter(&log.TextFormatter{
-	// 	FullTimestamp: true,
-	// })
-
-	// var port string
-	// var ok bool
-	// port, ok = os.LookupEnv("PORT")
-	// if ok {
-	// 	log.WithFields(log.Fields{
-	// 		"PORT": port,
-	// 	}).Info("PORT env var defined")
-
-	// } else {
-	// 	port = "9000"
-	// 	log.WithFields(log.Fields{
-	// 		"PORT": port,
-	// 	}).Warn("PORT env var not defined. Going with default")
-
-	// }
 
 	port := "50059"
 
