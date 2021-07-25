@@ -2,11 +2,10 @@ package grpcdriver
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
-	auth_pb "github.com/hasbiasshidiq/auth-stub-3"
+	auth_pb "github.com/hasbiasshidiq/auth-stub-5"
 
 	"Referral-System/generator/config"
 	entity "Referral-System/generator/entity"
@@ -22,10 +21,8 @@ func NewTokenGRPC() *TokenGRPC {
 	return &TokenGRPC{}
 }
 
-//CreateToken will send create token request to grpc server
+//Create will send create token request to grpc server
 func (r *TokenGRPC) Create(e *entity.Token) (AccessToken string, err error) {
-
-	fmt.Println("check")
 	conn, err := grpc.Dial(config.TOKEN_GRPC_URL, grpc.WithTimeout(5*time.Second), grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Printf("did not connect: %v", err)
@@ -51,10 +48,48 @@ func (r *TokenGRPC) Create(e *entity.Token) (AccessToken string, err error) {
 		return
 	}
 
-	fmt.Println(resp.AccessToken)
 	AccessToken = resp.AccessToken
 
 	log.Printf("Token Successfully Created")
+
+	return
+}
+
+//Introspect will validate access token and return some claims like role and referral link
+func (r *TokenGRPC) Introspect(AccessToken string) (Role, ReferralLink string, err error) {
+	conn, err := grpc.Dial(config.TOKEN_GRPC_URL, grpc.WithTimeout(5*time.Second), grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Printf("did not connect: %v", err)
+		return
+	}
+
+	defer conn.Close()
+
+	a := auth_pb.NewAuthClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resp, err := a.IntrospectToken(ctx, &auth_pb.IntrospectTokenRequest{
+		AccessToken: AccessToken,
+	})
+	if err != nil {
+		log.Printf("Could not introspect Token :%v", err)
+		return
+	}
+
+	if resp.StatusCode == auth_pb.AuthStatusCode_EXPIRATE_TOKEN {
+		err = entity.ErrExpirateToken
+		return
+	}
+
+	if resp.StatusCode == auth_pb.AuthStatusCode_INVALID_TOKEN {
+		err = entity.ErrInvalidToken
+		return
+	}
+
+	ReferralLink = resp.ReferralLink
+	Role = resp.Role
 
 	return
 }
