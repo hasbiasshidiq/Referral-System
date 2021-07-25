@@ -87,7 +87,9 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 
 	// check issuer
 	issuer := fmt.Sprintf("%v", claims["iss"])
-	if issuer != "Referral_System" {
+	if issuer != "Referral-System" {
+
+		log.Println("issuer : ", issuer)
 
 		log.Println("issuer is not match")
 
@@ -97,12 +99,12 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 		return
 	}
 
-	exp := fmt.Sprintf("%v", claims["iss"])
+	exp := fmt.Sprintf("%v", claims["exp"])
 
 	// parsing expiration time (string) into time format
 	val, err := time.Parse("2006-01-02 15:04:05", exp)
 	if err != nil {
-		log.Println("Introspect- Time Parse err : ", err.Error())
+		log.Println("Introspect Time Parse err : ", err.Error())
 
 		return
 	}
