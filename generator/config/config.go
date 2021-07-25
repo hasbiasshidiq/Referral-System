@@ -23,7 +23,8 @@ var (
 	DB_NAME     string
 	DB_PASSWORD string
 
-	API_PORT string
+	API_PORT       string
+	TOKEN_GRPC_URL string
 
 	SHARED_LINK_ENDPOINT string
 )
@@ -41,6 +42,7 @@ func LoadEnv() {
 	DB_PASSWORD = os.Getenv("DB_PASSWORD")
 
 	API_PORT = os.Getenv("API_PORT")
+	TOKEN_GRPC_URL = os.Getenv("TOKEN_GRPC_URL")
 
 	SHARED_LINK_ENDPOINT = os.Getenv("SHARED_LINK_ENDPOINT")
 

@@ -4,8 +4,11 @@ import (
 	"Referral-System/generator/api/handler"
 	"Referral-System/generator/api/middleware"
 	"Referral-System/generator/config"
+	grpcdriver "Referral-System/generator/infrastructure/grpc-driver"
 	"Referral-System/generator/infrastructure/repository"
+
 	"Referral-System/generator/usecase/generator"
+	"Referral-System/generator/usecase/token"
 
 	"database/sql"
 	"fmt"
@@ -47,11 +50,14 @@ func main() {
 	)
 
 	generatorRepo := repository.NewGeneratorSQL(db)
+	tokenGRPC := grpcdriver.NewTokenGRPC()
+
 	generatorService := generator.NewService(generatorRepo)
+	tokenService := token.NewService(generatorRepo, tokenGRPC)
 
 	//Generator
 	handler.MakeGeneratorHandlers(r, *n, generatorService)
-	handler.MakeReferralHandlers(r, *n)
+	handler.MakeReferralHandlers(r, *n, tokenService)
 
 	http.Handle("/", r)
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
