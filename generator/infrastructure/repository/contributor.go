@@ -22,8 +22,8 @@ func NewContributorSQL(db *sql.DB) *ContributorSQL {
 }
 
 // Contribute will insert a Contributor type into SQL based database as repository
-// First it will insert new row into contributor table
-// If it was already exist, then the function will update the existing row
+// First it will update a row in contributor table
+// If it was not exist, then the function will insert a new row
 func (r *ContributorSQL) Contribute(e *entity.Contributor) (err error) {
 	err = r.Update(e)
 
