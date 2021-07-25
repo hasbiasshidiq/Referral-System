@@ -70,10 +70,6 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 	if err != nil {
 		log.Println("Introspect- Readfile err : ", err.Error())
 
-		resp = &auth_pb.IntrospectTokenResponse{
-			StatusCode: auth_pb.AuthStatusCode_INTERNAL_SERVER_ERROR,
-		}
-
 		return
 	}
 
@@ -108,9 +104,6 @@ func (s *Server) IntrospectToken(ctx context.Context, req *auth_pb.IntrospectTok
 	if err != nil {
 		log.Println("Introspect- Time Parse err : ", err.Error())
 
-		resp = &auth_pb.IntrospectTokenResponse{
-			StatusCode: auth_pb.AuthStatusCode_INTERNAL_SERVER_ERROR,
-		}
 		return
 	}
 
