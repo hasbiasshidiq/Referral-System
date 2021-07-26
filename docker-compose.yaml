@@ -1,0 +1,50 @@
+version: "2.3"
+services:
+    postgres:
+        image: postgres:10.5-alpine
+        restart: always
+        environment:
+            - POSTGRES_USER=minions
+            - POSTGRES_PASSWORD=minions_pass_world
+            - POSTGRES_DB=referral_system
+            - TZ=Asia/Jakarta
+            - PGTZ=Asia/Jakarta
+        ports:
+            - "5432:5432"
+        volumes: 
+            - ./referral-server/script/db-script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    referral-server:
+        build:
+            context: ./referral-server
+            dockerfile: Dockerfile
+        container_name: referral-server-container
+        depends_on:
+            - postgres
+        network_mode: host
+        # ports:
+        #     - "8080:8080"
+        environment:
+            - DB_HOST=127.0.0.1
+            - DB_USER=minions
+            - DB_PASSWORD=minions_pass_world
+            - DB_NAME=referral_system
+            - DB_PORT=5432
+            - API_PORT=8080
+            - TOKEN_GRPC_URL=localhost:50059
+            - SHARED_LINK_ENDPOINT=http://localhost:8080/referral/
+            - TZ=Asia/Jakarta
+        volumes:
+            - ./referral-server:/go/src/go-with-compose
+        working_dir: /go/src/go-with-compose
+    auth-server:
+        build:
+            context: ./auth-server
+            dockerfile: Dockerfile
+        container_name: auth-server-container
+        network_mode: host
+        environment:
+            - API_PORT=50059
+            - TZ=Asia/Jakarta
+        volumes:
+            - ./auth-server:/go/src/go-with-compose
+        working_dir: /go/src/go-with-compose
